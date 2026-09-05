@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+
+:root {
+  --cream: #FAF6ED;
+  --paper: #FFFFFF;
+  --ink: #1E1A12;
+  --ink-soft: #6B6252;
+  --line: #E8E0CD;
+  --line-strong: #D9CDAF;
+  --gold: #E8B94A;
+  --gold-dark: #A6690E;
+  --teal: #0F3538;
+  --danger: #A23A3A;
+  --whatsapp: #1F6B4A;
+  --call: #155E63;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--cream);
+  font-family: var(--font-body);
+  color: var(--ink);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--gold-dark) !important;
+  box-shadow: 0 0 0 3px rgba(232, 185, 74, 0.22);
+}
+
+.stall-card {
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.stall-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(30, 26, 18, 0.08);
+  border-color: var(--line-strong);
+}
+
+.ticket-notch {
+  position: relative;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, var(--line-strong) 0 6px, transparent 6px 12px);
+  margin: 0 14px;
+}
+
+.ticket-notch::before,
+.ticket-notch::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  width: 12px;
+  height: 12px;
+  background: var(--cream);
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+}
+
+.ticket-notch::before {
+  left: -20px;
+}
+
+.ticket-notch::after {
+  right: -20px;
+}
+
+@media (max-width: 720px) {
+  .auth-shell {
+    grid-template-columns: 1fr !important;
+  }
+
+  .auth-side {
+    display: none;
+  }
+}
