@@ -213,8 +213,14 @@ function Auth({ role }) {
     // Routing uses "owner" for the vendor portal, but the DB enum only
     // knows "vendor" — translate here so signup writes a valid role.
     const dbRole = role === 'owner' ? 'vendor' : role;
+    // Admin accounts can never self-signup — only login is allowed here.
+    // (The DB trigger also refuses to grant 'admin' from client metadata,
+    // so this is a UX guard, not the real security boundary.) New admins
+    // are created by an existing admin promoting a user from
+    // /admin/users, not through this form.
+    const effectiveMode = role === 'admin' ? 'login' : mode;
     const r =
-      mode === 'login'
+      effectiveMode === 'login'
         ? await signIn(email, password)
         : await signUp(email, password, { full_name: name, role: dbRole, shop_name: shop });
 
@@ -248,6 +254,11 @@ function Auth({ role }) {
         <p className="mt-1 text-sm text-muted">
           {role === 'owner' ? 'Vendor portal' : 'Executive admin portal'}
         </p>
+        {role === 'admin' && (
+          <p className="mt-1 text-xs text-muted">
+            Admin accounts are created by an existing admin — there's no self-signup here.
+          </p>
+        )}
 
         <form onSubmit={submit} className="mt-6 space-y-4">
           {mode === 'signup' && (
