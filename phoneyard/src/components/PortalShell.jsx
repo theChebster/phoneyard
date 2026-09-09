@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -21,9 +21,28 @@ import {
   FileCheck,
   Megaphone,
   Activity,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { useSetting, SETTING_KEYS } from '../lib/settings';
+
+// Tracks whether we're at/above the `lg` breakpoint, so the sidebar can
+// default to open on desktop and closed on phone, and so we know when to
+// auto-close the drawer after tapping a link on mobile.
+const DESKTOP_QUERY = '(min-width: 1024px)';
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(DESKTOP_QUERY).matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia(DESKTOP_QUERY);
+    const handler = (e) => setIsDesktop(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return isDesktop;
+}
 
 const owner = [
   ['/owner', 'Dashboard', LayoutDashboard],
@@ -90,6 +109,8 @@ export function Shell({ portal = 'public', children }) {
   const { user, profile, signOut } = useAuth();
   const loc = useLocation();
   const nav = portal === 'owner' ? owner : portal === 'admin' ? admin : [];
+  const isDesktop = useIsDesktop();
+  const [sidebarOpen, setSidebarOpen] = useState(isDesktop);
 
   // Always call the hook (rules of hooks); only act on it for the public
   // portal. Vendor/admin logins stay open even while this is enabled, so
@@ -144,6 +165,14 @@ export function Shell({ portal = 'public', children }) {
       <header className="border-b border-line bg-white">
         <div className="mx-auto flex max-w-[1500px] items-center justify-between px-4 py-4">
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen((v) => !v)}
+              className="rounded-lg p-2 hover:bg-cream"
+              aria-label={sidebarOpen ? 'Collapse menu' : 'Expand menu'}
+              aria-expanded={sidebarOpen}
+            >
+              <Menu size={20} />
+            </button>
             <Link to={portal === 'owner' ? '/owner' : '/admin'} className="font-display text-2xl font-bold">
               Phone<span className="text-gold-dark">yard</span>
             </Link>
@@ -157,13 +186,41 @@ export function Shell({ portal = 'public', children }) {
           </div>
         </div>
       </header>
-      <div className="mx-auto grid max-w-[1500px] lg:grid-cols-[250px_1fr]">
-        <aside className="border-b border-line bg-white p-3 lg:min-h-[calc(100vh-73px)] lg:border-b-0 lg:border-r">
-          <nav className="flex gap-1 overflow-auto lg:block">
+      <div className="mx-auto flex max-w-[1500px] items-start">
+        {/* Backdrop: only shown on mobile while the drawer is open */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 w-[250px] transform border-r border-line bg-white p-3 transition-transform duration-200 ease-in-out
+            lg:sticky lg:top-[73px] lg:z-auto lg:min-h-[calc(100vh-73px)] lg:translate-x-0 lg:transition-[width,padding,opacity] lg:duration-200
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            ${sidebarOpen ? 'lg:w-[250px] lg:p-3 lg:opacity-100' : 'lg:w-0 lg:overflow-hidden lg:border-r-0 lg:p-0 lg:opacity-0'}
+          `}
+        >
+          <div className="mb-2 flex items-center justify-between lg:hidden">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted">Menu</span>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="rounded-lg p-1.5 hover:bg-cream"
+              aria-label="Close menu"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <nav className="flex flex-col gap-1">
             {nav.map(([to, label, Icon]) => (
               <Link
                 key={to}
                 to={to}
+                onClick={() => {
+                  if (!isDesktop) setSidebarOpen(false);
+                }}
                 className={`flex min-w-max items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold ${
                   loc.pathname === to ? 'bg-teal text-white' : 'text-muted hover:bg-cream'
                 }`}
@@ -174,7 +231,8 @@ export function Shell({ portal = 'public', children }) {
             ))}
           </nav>
         </aside>
-        <main className="min-w-0 p-4 sm:p-7">{children}</main>
+
+        <main className="min-w-0 flex-1 p-4 sm:p-7">{children}</main>
       </div>
     </div>
   );
